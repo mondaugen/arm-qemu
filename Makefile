@@ -2,12 +2,14 @@
 SRC=main
 # This sets the compiler to use. Most people use gcc clang is also another
 # common compiler. It becomes the variable which can be accessed with $(CC)
-CC=arm-none-eabi-gcc
-# These are the flags that get passed to $(CC)
-CFLAGS=-g -O0 -ansi -pedantic -Wall
+AS=arm-none-eabi-as
+LINKER=arm-none-eabi-ld
+OBJCOPY=arm-none-eabi-objcopy
+# Assembler flags
+ASFLAGS=-g -mcpu=cortex-a8
 # These are linker flags only needed if using external libraries but we are not
 # in this
-LDFLAGS=--specs=rdimon.specs -lgcc -lc -lm -lrdimon
+LDFLAGS=-T linker.ld
 # This says to grab all the files with the c extension in this directory and
 # make them the array called SRC_SOURCES
 SRC_SOURCES=$(wildcard *.s)
@@ -23,18 +25,20 @@ all: $(SRC)
 # their respective o files
 $(SRC): $(SRC_OBJECTS)
 	@# The $@ variable gets replaced with $(SRC)
-	$(CC) $(SRC_OBJECTS) $(LDFLAGS) -o $@
+	$(LINKER) $(LDFLAGS) $(SRC_OBJECTS) -o $@.elf
+	@# Make the elf a binary
+	$(OBJCOPY) -O binary $@.elf $@.bin
 
 # This is the action that is run to create all the .o files, object files.
 # Every c file in the array SRC_SOURCES is compiled to its object file for
 # before being linked together
 %.o:%.s
-	$(CC) $(CFLAGS) $< -c
+	$(AS) $(ASFLAGS) $< -o $@
 
 # Clean deletes everything that gets created when you run the build. This means
 # all the .o files and the binary named $(SRC)
 clean:
-	rm -f $(SRC) *.o *.tar.xz *.core
+	rm -f $(SRC) *.o *.tar.xz *.core *.elf *.bin
 
 # This creates the tar file for submission
 tar:
@@ -42,9 +46,10 @@ tar:
 
 # Run the binary in qemu
 qemu:
-	qemu-arm $(SRC)
+	qemu-system-arm -M realview-pb-a8 -m 128M -nographic -s -S -kernel $(SRC).bin
 
 # Run the binary in qemu with gdb server then launch gdb
 gdb:
-	qemu-arm -g 1234 $(SRC) &
+	qemu-system-arm -M realview-pb-a8 -m 128M -nographic -s -S -kernel $(SRC).bin &
 	arm-none-eabi-gdb
+	killall qemu-system-arm
