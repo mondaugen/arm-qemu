@@ -14,6 +14,19 @@ sudo pacman -S arm-none-eabi-gcc arm-none-eabi-binutils arm-none-eabi-gdb \
   arm-none-eabi-newlib qemu qemu-arch-extra
 ```
 
+#### Ubuntu
+
+```
+sudo apt -y install \
+    make \
+    gcc-arm-none-eabi \
+    binutils-arm-none-eabi \
+    gdb-arm-none-eabi \
+    libstdc++-arm-none-eabi-newlib \
+    libnewlib-arm-none-eabi \
+    qemu-system-arm
+```
+
 ## GDB
 
 In `.gdbinit` we have placed commands which gdb will run on startup. But to
