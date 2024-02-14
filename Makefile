@@ -16,6 +16,9 @@ SRC_SOURCES=$(wildcard *.s)
 # This makes an array of all the c files but replaces .c with .o
 SRC_OBJECTS=$(SRC_SOURCES:.s=.o)
 
+ELF=$(SRC).elf
+BIN=$(SRC).bin
+
 # When you run make then all is the default command to run. So running `make` is
 # the same as running `make all`
 all: $(SRC)
@@ -23,11 +26,13 @@ all: $(SRC)
 # This says to build $(SRC) then all the o files need to be present / up to
 # date first. The way they get up to date is by compiling the c files in to
 # their respective o files
-$(SRC): $(SRC_OBJECTS)
+$(ELF): $(SRC_OBJECTS)
 	@# The $@ variable gets replaced with $(SRC)
-	$(LINKER) $(LDFLAGS) $(SRC_OBJECTS) -o $@.elf
+	$(LINKER) $(LDFLAGS) $(SRC_OBJECTS) -o $@
+
+$(BIN): $(ELF)
 	@# Make the elf a binary
-	$(OBJCOPY) -O binary $@.elf $@.bin
+	$(OBJCOPY) -O binary $< $@
 
 # This is the action that is run to create all the .o files, object files.
 # Every c file in the array SRC_SOURCES is compiled to its object file for
@@ -45,11 +50,9 @@ tar:
 	tar czvf $(SRC).tar.xz $(SRC_SOURCES) Makefile
 
 # Run the binary in qemu
-qemu:
-	qemu-system-arm -M realview-pb-a8 -m 128M -nographic -s -S -kernel $(SRC).bin
+qemu: $(BIN)
+	qemu-system-arm -M realview-pb-a8 -m 128M -nographic -s -S -kernel $(SRC).bin &
 
 # Run the binary in qemu with gdb server then launch gdb
-gdb:
-	qemu-system-arm -M realview-pb-a8 -m 128M -nographic -s -S -kernel $(SRC).bin &
-	arm-none-eabi-gdb
-	killall qemu-system-arm
+gdb: qemu
+	gdb-multiarch
