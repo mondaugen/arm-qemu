@@ -2,19 +2,19 @@
 SRC=main
 # This sets the compiler to use. Most people use gcc clang is also another
 # common compiler. It becomes the variable which can be accessed with $(CC)
-AS=arm-none-eabi-as
+CC=arm-none-eabi-gcc
 LINKER=arm-none-eabi-ld
 OBJCOPY=arm-none-eabi-objcopy
-# Assembler flags
-ASFLAGS=-g -mcpu=cortex-a8
+# Compiler flags
+CFLAGS=-c -g -mcpu=cortex-a8
 # These are linker flags only needed if using external libraries but we are not
 # in this
-LDFLAGS=-T linker.ld
+LDFLAGS=-T linker.ld -nostartfiles
 # This says to grab all the files with the c extension in this directory and
 # make them the array called SRC_SOURCES
-SRC_SOURCES=$(wildcard *.s)
+SRC_SOURCES=$(wildcard *.c)
 # This makes an array of all the c files but replaces .c with .o
-SRC_OBJECTS=$(SRC_SOURCES:.s=.o)
+SRC_OBJECTS=$(SRC_SOURCES:.c=.o)
 
 ELF=$(SRC).elf
 BIN=$(SRC).bin
@@ -37,8 +37,8 @@ $(BIN): $(ELF)
 # This is the action that is run to create all the .o files, object files.
 # Every c file in the array SRC_SOURCES is compiled to its object file for
 # before being linked together
-%.o:%.s
-	$(AS) $(ASFLAGS) $< -o $@
+%.o:%.c
+	$(CC) $(CFLAGS) $< -o $@
 
 # Clean deletes everything that gets created when you run the build. This means
 # all the .o files and the binary named $(SRC)
